@@ -20,6 +20,42 @@
 </head>
 <body>
 
+    <div id="workspace">
+        <div id="left-panel">
+            <h2>Signova Control Panel</h2>
+            
+            <div class="control-box">
+                <h3>1. Authentication</h3>
+                <!-- <div id="g_id_onload" data-client_id="219175324866-2do89kbdr0v4vmdo6r6uaa99103bf3fb.apps.googleusercontent.com" data-callback="handleGoogleLogin"></div>
+                <div class="g_id_signin"></div> -->
+            </div>
+
+            <div class="control-box">
+                <h3>2. Text to Sign Translation</h3>
+                <input type="text" id="textToSignInput" placeholder="Type text to animate avatar..." style="width:80%; padding:8px;">
+                <button id="animateBtn">Animate</button>
+            </div>
+
+            <div class="control-box">
+                <h3>3. Sign to Text (Webcam)</h3>
+                <video id="video" autoplay></video>
+                <canvas id="canvas"></canvas>
+                <button onclick="startCamera()">Start Tracking</button>
+                <button onclick="clearSentence()">Clear Text</button>
+                <p><strong>Live Prediction:</strong> <span id="letter">-</span></p>
+                <p><strong>Sentence Output:</strong> <span id="sentence"></span></p>
+            </div>
+
+            <div class="control-box">
+                <h3>4. Speech to Text</h3>
+                <button onclick="startRecording()">Start Mic</button>
+                <button onclick="stopRecording()">Stop & Send Audio</button>
+                <p><strong>Transcription:</strong> <span id="speechResult"></span></p>
+            </div>
+        </div>
+
+        <div id="canvas-3d-container"></div>
+    </div>
 
     <script type="importmap">
         {
