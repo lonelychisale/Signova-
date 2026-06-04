@@ -7,6 +7,55 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 let scene, camera, renderer, avatar;
 const container = document.getElementById('canvas-3d-container');
 
+// Bone target rotations for smooth interpolation
+const boneTargets = {};
+const LERP_FACTOR = 0.1;
+
+const signLanguageMap = {
+    'A': {
+        'RightForeArm': { x: -1.2, y: 0.2, z: 0 },
+        'RightHandIndex1': { x: 1.5, y: 0, z: 0 },
+        'RightHandMiddle1': { x: 1.5, y: 0, z: 0 },
+        'RightHandRing1': { x: 1.5, y: 0, z: 0 },
+        'RightHandPinky1': { x: 1.5, y: 0, z: 0 },
+        'RightHandThumb2': { x: 0, y: 0, z: 0.5 }
+    },
+    'B': {
+        'RightForeArm': { x: -1.2, y: 0.2, z: 0 },
+        'RightHandIndex1': { x: 0, y: 0, z: 0 },
+        'RightHandMiddle1': { x: 0, y: 0, z: 0 },
+        'RightHandRing1': { x: 0, y: 0, z: 0 },
+        'RightHandPinky1': { x: 0, y: 0, z: 0 },
+        'RightHandThumb2': { x: 0, y: 0, z: 1.2 }
+    },
+    'C': {
+        'RightForeArm': { x: -1.2, y: 0.2, z: 0 },
+        'RightHandIndex1': { x: 0.8, y: 0, z: 0 },
+        'RightHandMiddle1': { x: 0.8, y: 0, z: 0 },
+        'RightHandRing1': { x: 0.8, y: 0, z: 0 },
+        'RightHandPinky1': { x: 0.8, y: 0, z: 0 },
+        'RightHandThumb2': { x: 0.5, y: 0, z: 0.8 }
+    }
+    // Additional letters (D-Z) can be mapped here using the same structure
+};
+
+/**
+ * Maps a single character to avatar joint rotations.
+ * @param {string} letter - The character to animate.
+ */
+function animateCharacterToLetter(letter) {
+    const char = letter.toUpperCase();
+    if (!signLanguageMap[char]) {
+        console.warn(`No mapping found for letter: ${char}`);
+        return;
+    }
+
+    const pose = signLanguageMap[char];
+    for (const [boneName, rotation] of Object.entries(pose)) {
+        boneTargets[boneName] = rotation;
+    }
+}
+
 function init3DSpace() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
