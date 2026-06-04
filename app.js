@@ -42,3 +42,32 @@ function init3DSpace() {
         animate();
     }, undefined, (error) => console.error("Error loading model asset:", error));
 }
+
+/**
+ * Traverses the 3D model hierarchy and logs the names of all Bone objects.
+ * Useful for identifying rig joint names for animation mapping.
+ */
+function debugModelStructure(obj) {
+    console.log("--- START AVATAR BONE HIERARCHY ---");
+    obj.traverse((node) => {
+        if (node.isBone) {
+            console.log("Bone Node Found:", node.name);
+        }
+    });
+    console.log("--- END AVATAR BONE HIERARCHY ---");
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    if (!camera || !renderer) return;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+});
+
+// Attach 3D loader initialization to boot cycle
+window.addEventListener('DOMContentLoaded', init3DSpace);
