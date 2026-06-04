@@ -97,3 +97,99 @@ function normalizeHandCoordinates(coords) {
     }
     return arr.flat();
 }
+
+// ==========================================
+// 3. MEDIAPIPE & LIVE DATASTREAM INTEGRATION
+// ==========================================
+let sentence = "";
+let currentPrediction = "";
+let lastLetter = "";
+let predictionStart = null;
+const STABLE_TIME = 1200;
+let lastHandSeen = Date.now();
+const NO_HAND_TIMEOUT = 2000;
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const hands = new Hands({
+    locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+});
+
+hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    refineLandmarks: true,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7
+});
+
+hands.onResults(async (results) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let now = Date.now();
+    
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        lastHandSeen = now;
+        let landmarks = results.multiHandLandmarks[0];
+        
+        // Render canvas bones visually
+        drawConnectors(ctx, landmarks, HAND_CONNECTIONS);
+        drawLandmarks(ctx, landmarks);
+        
+        let coords = [];
+        landmarks.forEach(p => coords.push(p.x, p.y, p.z));
+        let normalized = normalizeHandCoordinates(coords);
+        
+        try {
+            let res = await fetch("https://signova-ai-cvsw.onrender.com/api/auth/predict-sign/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ coordinates: normalized })
+            });
+            let data = await res.json();
+            let prediction = data.prediction || "";
+            document.getElementById("letter").innerText = prediction;
+            
+            // Stabilization Processing Buffer
+            if (prediction !== currentPrediction) {
+                currentPrediction = prediction;
+                predictionStart = now;
+            } else {
+                if (predictionStart && (now - predictionStart >= STABLE_TIME)) {
+                    if (prediction && prediction !== lastLetter) {
+                        sentence += prediction;
+                        lastLetter = prediction;
+                        document.getElementById("sentence").innerText = sentence;
+                        predictionStart = now;
+                    }
+                }
+            }
+        } catch (e) { console.error("Sign prediction API fault:", e); }
+    } else {
+        // Space injection when hands disappear
+        if (now - lastHandSeen > NO_HAND_TIMEOUT) {
+            if (!sentence.endsWith(" ") && sentence.length > 0) {
+                sentence += " ";
+                lastLetter = "";
+                document.getElementById("sentence").innerText = sentence;
+            }
+            lastHandSeen = now;
+        }
+    }
+});
+
+window.startCamera = function() {
+    const cam = new Camera(video, {
+        onFrame: async () => await hands.send({ image: video }),
+        width: 400,
+        height: 300
+    });
+    cam.start();
+};
+
+window.clearSentence = function() {
+    sentence = "";
+    lastLetter = "";
+    document.getElementById("sentence").innerText = "";
+};
