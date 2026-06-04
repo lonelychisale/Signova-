@@ -1,0 +1,44 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+// ==========================================
+// 1. THREE.JS 3D AVATAR SYSTEM ENVIRONMENT
+// ==========================================
+let scene, camera, renderer, avatar;
+const container = document.getElementById('canvas-3d-container');
+
+function init3DSpace() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 1.4, 2.5); // Pointed at model torso
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    directionalLight.position.set(5, 10, 7.5);
+    scene.add(directionalLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    const loader = new GLTFLoader();
+    
+    // Model requires Meshopt decoder for compressed assets
+    if (typeof MeshoptDecoder !== 'undefined') {
+        loader.setMeshoptDecoder(MeshoptDecoder);
+    } else {
+        console.warn("MeshoptDecoder not found. Model loading might fail if compressed.");
+    }
+
+    loader.load('./assets/avatar.glb', (gltf) => {
+        avatar = gltf.scene;
+        scene.add(avatar);
+        
+        // Debugging Hook: Ready for mapping out joint bone trees
+        debugModelStructure(avatar);
+        console.log("Avatar loaded successfully. Ready for bone extraction transformation rules.");
+        animate();
+    }, undefined, (error) => console.error("Error loading model asset:", error));
+}
