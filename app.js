@@ -70,7 +70,24 @@ window.addEventListener('resize', () => {
 });
 
 // Attach 3D loader initialization to boot cycle
-window.addEventListener('DOMContentLoaded', init3DSpace);
+window.addEventListener('DOMContentLoaded', () => {
+    init3DSpace();
+
+    // Hook up Text-to-Sign UI controls
+    const animateBtn = document.getElementById('animateBtn');
+    const textToSignInput = document.getElementById('textToSignInput');
+
+    if (animateBtn && textToSignInput) {
+        animateBtn.addEventListener('click', () => {
+            const text = textToSignInput.value.trim();
+            if (text.length > 0) {
+                // For now, we just animate the first character as a proof of concept
+                // before we handle sequential string parsing
+                animateCharacterToLetter(text[0]);
+            }
+        });
+    }
+});
 
 // ==========================================
 // 2. BACKEND COMPATIBLE MATH NORMALIZATION
