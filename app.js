@@ -193,3 +193,42 @@ window.clearSentence = function() {
     lastLetter = "";
     document.getElementById("sentence").innerText = "";
 };
+
+// ==========================================
+// 4. SPEECH AUDIO RECORDING & AUTH SYSTEMS
+// ==========================================
+let recorder, chunks = [];
+
+window.startRecording = async function() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recorder = new MediaRecorder(stream);
+    chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.start();
+};
+
+window.stopRecording = function() {
+    if (!recorder) return;
+    recorder.stop();
+    recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "audio/wav" });
+        let form = new FormData();
+        form.append("audio", blob);
+        
+        let res = await fetch("https://signova-ai-cvsw.onrender.com/api/auth/speech-to-text/", {
+            method: "POST",
+            body: form
+        });
+        let data = await res.json();
+        document.getElementById("speechResult").innerText = data.text || "";
+    };
+};
+
+window.handleGoogleLogin = function(response) {
+    const token = response.credential;
+    fetch("https://signova-ai-cvsw.onrender.com/api/auth/google/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+    });
+};
