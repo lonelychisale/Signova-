@@ -59,6 +59,19 @@ function debugModelStructure(obj) {
 
 function animate() {
     requestAnimationFrame(animate);
+
+    // Apply smooth interpolation for bone rotations
+    if (avatar) {
+        for (const [boneName, target] of Object.entries(boneTargets)) {
+            const bone = avatar.getObjectByName(boneName);
+            if (bone) {
+                bone.rotation.x = THREE.MathUtils.lerp(bone.rotation.x, target.x, LERP_FACTOR);
+                bone.rotation.y = THREE.MathUtils.lerp(bone.rotation.y, target.y, LERP_FACTOR);
+                bone.rotation.z = THREE.MathUtils.lerp(bone.rotation.z, target.z, LERP_FACTOR);
+            }
+        }
+    }
+
     renderer.render(scene, camera);
 }
 
