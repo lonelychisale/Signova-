@@ -71,3 +71,29 @@ window.addEventListener('resize', () => {
 
 // Attach 3D loader initialization to boot cycle
 window.addEventListener('DOMContentLoaded', init3DSpace);
+
+// ==========================================
+// 2. BACKEND COMPATIBLE MATH NORMALIZATION
+// ==========================================
+function normalizeHandCoordinates(coords) {
+    let arr = [];
+    for (let i = 0; i < coords.length; i += 3) {
+        arr.push([coords[i], coords[i+1], coords[i+2]]);
+    }
+    let wrist = arr[0];
+    arr = arr.map(p => [
+        p[0] - wrist[0],
+        p[1] - wrist[1],
+        p[2] - wrist[2] 
+    ]);
+    arr = arr.map(p => [p[0], p[1], p[2] * 0.5]);
+    let maxVal = Math.max(...arr.flat().map(v => Math.abs(v)));
+    if (maxVal !== 0) {
+        arr = arr.map(p => [
+            p[0] / maxVal,
+            p[1] / maxVal,
+            p[2] / maxVal 
+        ]);
+    }
+    return arr.flat();
+}
