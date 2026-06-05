@@ -10,12 +10,125 @@
     <script src="https://unpkg.com/meshoptimizer@0.21.0/meshopt_decoder.js"></script>
     
     <style>
-        body { margin: 0; font-family: sans-serif; background-color: #f0f0f0; display: flex; flex-direction: column; height: 100vh; }
-        #workspace { display: flex; flex: 1; overflow: hidden; }
-        #left-panel { width: 40%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; border-right: 1px solid #ccc; gap: 15px; }
-        #canvas-3d-container { width: 60%; position: relative; background: #e0e0e0; }
-        video, canvas { width: 100%; max-height: 240px; background: black; border-radius: 8px; }
-        .control-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        :root {
+            --primary-color: #4f46e5;
+            --bg-color: #f8fafc;
+            --panel-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+        }
+
+        #workspace { 
+            display: flex; 
+            flex: 1; 
+            overflow: hidden; 
+        }
+
+        #left-panel { 
+            width: 400px; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 24px; 
+            box-sizing: border-box; 
+            border-right: 1px solid var(--border-color); 
+            gap: 20px; 
+            overflow-y: auto;
+            background: var(--panel-bg);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        #canvas-3d-container { 
+            flex: 1;
+            position: relative; 
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, #e2e8f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-box { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .control-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 { margin-top: 0; color: var(--primary-color); font-weight: 700; }
+        h3 { margin-top: 0; font-size: 0.95rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            transition: opacity 0.2s;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        button:hover { opacity: 0.9; }
+        button.secondary { background: #64748b; }
+
+        video, canvas { 
+            width: 100%; 
+            height: auto;
+            background: #0f172a; 
+            border-radius: 10px; 
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        #prediction-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        #prediction-status span { font-weight: 700; color: var(--primary-color); }
+        
+        #sentence-display {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            min-height: 40px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #475569;
+        }
     </style>
 </head>
 <body>
