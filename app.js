@@ -18,6 +18,7 @@ import {
 let scene, camera, renderer, avatar;
 const container = document.getElementById('canvas-3d-container');
 let isAnimatingString = false;
+let webcam = null; // Reference for MediaPipe Camera
 
 // boneTargets drives the LERP — always write to this, never directly to bone.rotation
 const boneTargets = JSON.parse(JSON.stringify(REST_POSE));
@@ -178,11 +179,19 @@ hands.setOptions({
 hands.onResults(async (results) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const now = Date.now();
+    
+    // Draw skeletal wireframe if hand is detected
     if (results.multiHandLandmarks?.length > 0) {
         lastHandSeen = now;
         const landmarks = results.multiHandLandmarks[0];
-        drawConnectors(ctx, landmarks, HAND_CONNECTIONS);
-        drawLandmarks(ctx, landmarks);
+        
+        // Use drawing_utils.js globals
+        if (typeof drawConnectors !== 'undefined') {
+            drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#4f46e5', lineWidth: 4 });
+            drawLandmarks(ctx, landmarks, { color: '#ffffff', lineWidth: 2 });
+        }
+
+        // Normalize 63 tracking array coordinates
         const coords = [];
         landmarks.forEach(p => coords.push(p.x, p.y, p.z));
         const normalized = normalizeHandCoordinates(coords);
@@ -221,14 +230,48 @@ hands.onResults(async (results) => {
     }
 });
 
-window.startCamera = function() {
-    const cam = new Camera(video, {
-        onFrame: async () => await hands.send({ image: video }),
-        width: 400,
-        height: 300
+// Initialize webcam tracking
+function startTracking() {
+    if (webcam) return; // Already active
+
+    console.log('Initializing webcam tracking...');
+    webcam = new Camera(video, { 
+        onFrame: async () => {
+            await hands.send({ image: video });
+        }, 
+        width: 400, 
+        height: 300 
     });
-    cam.start();
-};
+    webcam.start();
+    
+    document.getElementById('startTrackingBtn').disabled = true;
+    document.getElementById('startTrackingBtn').innerText = 'Active';
+}
+
+// Stop webcam tracking at will
+function stopTracking() {
+    if (!webcam) return;
+
+    console.log('Stopping webcam tracking...');
+    webcam.stop();
+    webcam = null;
+
+    // Explicitly stop all media tracks to release hardware (turns off the green light)
+    const stream = video.srcObject;
+    if (stream) {
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
+    }
+
+    // Reset UI
+    document.getElementById('startTrackingBtn').disabled = false;
+    document.getElementById('startTrackingBtn').innerText = 'Start Tracking';
+    document.getElementById('letter').innerText = '-';
+    
+    // Clear the tracking canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
 
 window.clearSentence = function() { 
     sentence = ""; lastLetter = ""; 
