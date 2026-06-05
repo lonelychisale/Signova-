@@ -32,25 +32,17 @@ function applyPose(pose) {
     }
 }
 
-/**
- * Maps a single character to avatar joint rotations.
- * @param {string} letter - The character to animate.
- */
 function animateCharacterToLetter(letter) {
     const char = letter.toUpperCase();
     if (char === ' ') { applyPose(REST_POSE); return; }
     if (!signLanguageMap[char]) {
-        console.warn(`No mapping found for letter: ${char}`);
+        console.warn(`No mapping for letter: ${char}`);
         return;
     }
     // Always start from rest arm position then override with sign-specific values
     applyPose({ ...REST_POSE, ...signLanguageMap[char] });
 }
 
-/**
- * Parses a string and sequentially animates the avatar.
- * @param {string} text - The input string to translate to sign.
- */
 async function playSignSequence(text) {
     if (isAnimatingString) return;
     isAnimatingString = true;
@@ -62,8 +54,6 @@ async function playSignSequence(text) {
         animateCharacterToLetter(char);
         await new Promise(resolve => setTimeout(resolve, delay));
     }
-
-    // Reset to resting pose after sequence completion
     applyPose(REST_POSE);
     isAnimatingString = false;
 }
@@ -196,6 +186,8 @@ hands.onResults(async (results) => {
         const coords = [];
         landmarks.forEach(p => coords.push(p.x, p.y, p.z));
         const normalized = normalizeHandCoordinates(coords);
+
+        // Securely POST data matrix to live API endpoint
         try {
             const res = await fetch(API_ENDPOINTS.predictSign, {
                 method: "POST",
@@ -205,8 +197,8 @@ hands.onResults(async (results) => {
             const data = await res.json();
             const prediction = data.prediction || "";
             document.getElementById("letter").innerText = prediction;
-            
-            // Stabilization Processing Buffer
+
+            // Handle UI stabilization timeout buffer (1200ms)
             if (prediction !== currentPrediction) {
                 currentPrediction = prediction; predictionStart = now;
             } else if (predictionStart && (now - predictionStart >= MEDIAPIPE_CONFIG.stableTime)) {
@@ -218,6 +210,7 @@ hands.onResults(async (results) => {
             }
         } catch (e) { console.error("Sign prediction API fault:", e); }
     } else {
+        // Handle no-hand timeout to add spaces
         if (now - lastHandSeen > MEDIAPIPE_CONFIG.noHandTimeout) {
             if (!sentence.endsWith(" ") && sentence.length > 0) {
                 sentence += " "; lastLetter = ""; 
@@ -237,8 +230,10 @@ window.startCamera = function() {
     cam.start();
 };
 
-window.clearSentence = function() {
-    sentence = ""; lastLetter = ""; document.getElementById("sentence").innerText = "";
+window.clearSentence = function() { 
+    sentence = ""; lastLetter = ""; 
+    document.getElementById("sentence").innerText = "Waiting..."; 
+    document.getElementById("letter").innerText = "-";
 };
 
 // ==========================================
@@ -259,21 +254,23 @@ window.stopRecording = function() {
     recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/wav" });
         const form = new FormData(); form.append("audio", blob);
-        const res = await fetch(API_ENDPOINTS.speechToText, {
-            method: "POST",
-            body: form
-        });
+        const res = await fetch(API_ENDPOINTS.speechToText, { method: "POST", body: form });
         const data = await res.json();
         document.getElementById("speechResult").innerText = data.text || "";
     };
 };
 
 // ==========================================
-// 7. BOOT
+// BOOT & EVENT LISTENERS
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
     init3DSpace();
 
+    // Tracking Controls
+    document.getElementById('startTrackingBtn')?.addEventListener('click', startTracking);
+    document.getElementById('stopTrackingBtn')?.addEventListener('click', stopTracking);
+
+    // Animation Controls
     document.getElementById('animateBtn')?.addEventListener('click', () => {
         const text = document.getElementById('textToSignInput').value.trim();
         if (text) playSignSequence(text);
@@ -281,4 +278,3 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('stopBtn')?.addEventListener('click', stopAnimation);
 });
-
