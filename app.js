@@ -1,61 +1,34 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {
+    SCENE_CONFIG,
+    CAMERA_CONFIG,
+    LIGHTS_CONFIG,
+    MODEL_CONFIG,
+    LERP_FACTOR,
+    REST_POSE,
+    signLanguageMap,
+    MEDIAPIPE_CONFIG,
+    API_ENDPOINTS
+} from './config.js';
 
 // ==========================================
-// 1. THREE.JS 3D AVATAR SYSTEM ENVIRONMENT
+// STATE & CORE VARIABLES
 // ==========================================
 let scene, camera, renderer, avatar;
 const container = document.getElementById('canvas-3d-container');
-
-// Bone target rotations for smooth interpolation
-const boneTargets = {};
-const LERP_FACTOR = 0.1;
 let isAnimatingString = false;
 
-const REST_POSE = {
-    'RightForeArm': { x: 0, y: 0, z: 0 },
-    'RightHandIndex1': { x: 0, y: 0, z: 0 },
-    'RightHandMiddle1': { x: 0, y: 0, z: 0 },
-    'RightHandRing1': { x: 0, y: 0, z: 0 },
-    'RightHandPinky1': { x: 0, y: 0, z: 0 },
-    'RightHandThumb2': { x: 0, y: 0, z: 0 }
-};
+// boneTargets drives the LERP — always write to this, never directly to bone.rotation
+const boneTargets = JSON.parse(JSON.stringify(REST_POSE));
 
-const signLanguageMap = {
-    'A': {
-        'RightForeArm': { x: -1.2, y: 0.2, z: 0 },
-        'RightHandIndex1': { x: 1.5, y: 0, z: 0 },
-        'RightHandMiddle1': { x: 1.5, y: 0, z: 0 },
-        'RightHandRing1': { x: 1.5, y: 0, z: 0 },
-        'RightHandPinky1': { x: 1.5, y: 0, z: 0 },
-        'RightHandThumb2': { x: 0, y: 0, z: 0.5 }
-    },
-    'B': {
-        'RightForeArm': { x: -1.2, y: 0.2, z: 0 },
-        'RightHandIndex1': { x: 0, y: 0, z: 0 },
-        'RightHandMiddle1': { x: 0, y: 0, z: 0 },
-        'RightHandRing1': { x: 0, y: 0, z: 0 },
-        'RightHandPinky1': { x: 0, y: 0, z: 0 },
-        'RightHandThumb2': { x: 0, y: 0, z: 1.2 }
-    },
-    'C': {
-        'RightForeArm': { x: -1.2, y: 0.2, z: 0 },
-        'RightHandIndex1': { x: 0.8, y: 0, z: 0 },
-        'RightHandMiddle1': { x: 0.8, y: 0, z: 0 },
-        'RightHandRing1': { x: 0.8, y: 0, z: 0 },
-        'RightHandPinky1': { x: 0.8, y: 0, z: 0 },
-        'RightHandThumb2': { x: 0.5, y: 0, z: 0.8 }
-    }
-    // Additional letters (D-Z) can be mapped here using the same structure
-};
-
-/**
- * Applies a specific pose to the bone target matrix.
- * @param {Object} pose - Dictionary of bone names and rotation values.
- */
+// ==========================================
+// POSE APPLICATION & ANIMATION
+// ==========================================
 function applyPose(pose) {
     for (const [boneName, rotation] of Object.entries(pose)) {
-        boneTargets[boneName] = rotation;
+        if (!boneTargets[boneName]) boneTargets[boneName] = { x: 0, y: 0, z: 0 };
+        boneTargets[boneName] = { ...rotation };
     }
 }
 
@@ -65,17 +38,13 @@ function applyPose(pose) {
  */
 function animateCharacterToLetter(letter) {
     const char = letter.toUpperCase();
-    if (char === ' ') {
-        applyPose(REST_POSE);
-        return;
-    }
-
+    if (char === ' ') { applyPose(REST_POSE); return; }
     if (!signLanguageMap[char]) {
         console.warn(`No mapping found for letter: ${char}`);
         return;
     }
-
-    applyPose(signLanguageMap[char]);
+    // Always start from rest arm position then override with sign-specific values
+    applyPose({ ...REST_POSE, ...signLanguageMap[char] });
 }
 
 /**
@@ -85,14 +54,13 @@ function animateCharacterToLetter(letter) {
 async function playSignSequence(text) {
     if (isAnimatingString) return;
     isAnimatingString = true;
-
-    // Clean and normalize input
     const sequence = text.toUpperCase().replace(/[^A-Z ]/g, '');
-    
+    const delay = parseInt(document.getElementById('speedSlider')?.value || 1000);
+
     for (const char of sequence) {
+        if (!isAnimatingString) break; // allow stop
         animateCharacterToLetter(char);
-        // Async pause between poses (Milestone 3: 1000ms delay)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, delay));
     }
 
     // Reset to resting pose after sequence completion
@@ -100,40 +68,51 @@ async function playSignSequence(text) {
     isAnimatingString = false;
 }
 
+function stopAnimation() {
+    isAnimatingString = false;
+    applyPose(REST_POSE);
+}
+
+// ==========================================
+// THREE.JS SCENE SETUP
+// ==========================================
 function init3DSpace() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+    scene.background = new THREE.Color(SCENE_CONFIG.backgroundColor);
 
-    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(0, 1.4, 2.5); // Pointed at model torso
+    camera = new THREE.PerspectiveCamera(
+        CAMERA_CONFIG.fov,
+        container.clientWidth / container.clientHeight,
+        CAMERA_CONFIG.near,
+        CAMERA_CONFIG.far
+    );
+    camera.position.set(CAMERA_CONFIG.position.x, CAMERA_CONFIG.position.y, CAMERA_CONFIG.position.z);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    directionalLight.position.set(5, 10, 7.5);
-    scene.add(directionalLight);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const dirLight = new THREE.DirectionalLight(LIGHTS_CONFIG.directional.color, LIGHTS_CONFIG.directional.intensity);
+    dirLight.position.set(
+        LIGHTS_CONFIG.directional.position.x,
+        LIGHTS_CONFIG.directional.position.y,
+        LIGHTS_CONFIG.directional.position.z
+    );
+    scene.add(dirLight);
+    scene.add(new THREE.AmbientLight(LIGHTS_CONFIG.ambient.color, LIGHTS_CONFIG.ambient.intensity));
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
     const loader = new GLTFLoader();
-    
-    // Model requires Meshopt decoder for compressed assets
-    if (typeof MeshoptDecoder !== 'undefined') {
-        loader.setMeshoptDecoder(MeshoptDecoder);
-    } else {
-        console.warn("MeshoptDecoder not found. Model loading might fail if compressed.");
-    }
+    if (typeof MeshoptDecoder !== 'undefined') loader.setMeshoptDecoder(MeshoptDecoder);
 
-    loader.load('./assets/avatar.glb', (gltf) => {
+    loader.load(MODEL_CONFIG.path, (gltf) => {
         avatar = gltf.scene;
         scene.add(avatar);
-        
-        // Debugging Hook: Ready for mapping out joint bone trees
         debugModelStructure(avatar);
-        console.log("Avatar loaded successfully. Ready for bone extraction transformation rules.");
+        // Apply rest pose immediately so arms don't T-pose on load
+        applyPose(REST_POSE);
         animate();
-    }, undefined, (error) => console.error("Error loading model asset:", error));
+        console.log('Avatar loaded. REST_POSE applied.');
+    }, undefined, (err) => console.error('Avatar load error:', err));
 }
 
 /**
@@ -141,22 +120,21 @@ function init3DSpace() {
  * Useful for identifying rig joint names for animation mapping.
  */
 function debugModelStructure(obj) {
-    console.log("--- START AVATAR BONE HIERARCHY ---");
+    console.log('--- BONE HIERARCHY ---');
     obj.traverse((node) => {
-        if (node.isBone) {
-            console.log("Bone Node Found:", node.name);
-        }
+        if (node.isBone) console.log('Bone:', node.name);
     });
-    console.log("--- END AVATAR BONE HIERARCHY ---");
+    console.log('--- END ---');
 }
 
 function animate() {
     requestAnimationFrame(animate);
-
-    // Apply smooth interpolation for bone rotations
     if (avatar) {
         for (const [boneName, target] of Object.entries(boneTargets)) {
-            const bone = avatar.getObjectByName(boneName);
+            const bone = avatar.getObjectByName(boneName)
+                      || avatar.getObjectByName(boneName.replace('Arm', 'UpperArm'))
+                      || avatar.getObjectByName('Armature|' + boneName)
+                      || avatar.getObjectByName('mixamorig' + boneName);
             if (bone) {
                 bone.rotation.x = THREE.MathUtils.lerp(bone.rotation.x, target.x, LERP_FACTOR);
                 bone.rotation.y = THREE.MathUtils.lerp(bone.rotation.y, target.y, LERP_FACTOR);
@@ -164,7 +142,6 @@ function animate() {
             }
         }
     }
-
     renderer.render(scene, camera);
 }
 
@@ -175,124 +152,75 @@ window.addEventListener('resize', () => {
     renderer.setSize(container.clientWidth, container.clientHeight);
 });
 
-// Attach 3D loader initialization to boot cycle
-window.addEventListener('DOMContentLoaded', () => {
-    init3DSpace();
-
-    // Hook up Text-to-Sign UI controls
-    const animateBtn = document.getElementById('animateBtn');
-    const textToSignInput = document.getElementById('textToSignInput');
-
-    if (animateBtn && textToSignInput) {
-        animateBtn.addEventListener('click', () => {
-            const text = textToSignInput.value.trim();
-            if (text.length > 0) {
-                playSignSequence(text);
-            }
-        });
-    }
-});
-
 // ==========================================
-// 2. BACKEND COMPATIBLE MATH NORMALIZATION
+// COORDINATE NORMALIZATION (matches Python backend)
 // ==========================================
 function normalizeHandCoordinates(coords) {
     let arr = [];
-    for (let i = 0; i < coords.length; i += 3) {
-        arr.push([coords[i], coords[i+1], coords[i+2]]);
-    }
+    for (let i = 0; i < coords.length; i += 3) arr.push([coords[i], coords[i+1], coords[i+2]]);
     let wrist = arr[0];
-    arr = arr.map(p => [
-        p[0] - wrist[0],
-        p[1] - wrist[1],
-        p[2] - wrist[2] 
-    ]);
+    arr = arr.map(p => [p[0]-wrist[0], p[1]-wrist[1], p[2]-wrist[2]]);
     arr = arr.map(p => [p[0], p[1], p[2] * 0.5]);
     let maxVal = Math.max(...arr.flat().map(v => Math.abs(v)));
-    if (maxVal !== 0) {
-        arr = arr.map(p => [
-            p[0] / maxVal,
-            p[1] / maxVal,
-            p[2] / maxVal 
-        ]);
-    }
+    if (maxVal !== 0) arr = arr.map(p => [p[0]/maxVal, p[1]/maxVal, p[2]/maxVal]);
     return arr.flat();
 }
 
 // ==========================================
-// 3. MEDIAPIPE & LIVE DATASTREAM INTEGRATION
+// MEDIAPIPE SIGN-TO-TEXT & LIVE DATASTREAM INTEGRATION
 // ==========================================
-let sentence = "";
-let currentPrediction = "";
-let lastLetter = "";
-let predictionStart = null;
-const STABLE_TIME = 1200;
+let sentence = "", currentPrediction = "", lastLetter = "", predictionStart = null;
 let lastHandSeen = Date.now();
-const NO_HAND_TIMEOUT = 2000;
 
-const video = document.getElementById("video");
+const video  = document.getElementById("video");
 const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const ctx    = canvas.getContext("2d");
 
-const hands = new Hands({
-    locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
-});
-
+const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
 hands.setOptions({
     maxNumHands: 1,
     modelComplexity: 1,
     refineLandmarks: true,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.7
+    minDetectionConfidence: MEDIAPIPE_CONFIG.minDetectionConfidence,
+    minTrackingConfidence: MEDIAPIPE_CONFIG.minTrackingConfidence
 });
 
 hands.onResults(async (results) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    let now = Date.now();
-    
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    const now = Date.now();
+    if (results.multiHandLandmarks?.length > 0) {
         lastHandSeen = now;
-        let landmarks = results.multiHandLandmarks[0];
-        
-        // Render canvas bones visually
+        const landmarks = results.multiHandLandmarks[0];
         drawConnectors(ctx, landmarks, HAND_CONNECTIONS);
         drawLandmarks(ctx, landmarks);
-        
-        let coords = [];
+        const coords = [];
         landmarks.forEach(p => coords.push(p.x, p.y, p.z));
-        let normalized = normalizeHandCoordinates(coords);
-        
+        const normalized = normalizeHandCoordinates(coords);
         try {
-            let res = await fetch("https://signova-ai-cvsw.onrender.com/api/auth/predict-sign/", {
+            const res = await fetch(API_ENDPOINTS.predictSign, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ coordinates: normalized })
             });
-            let data = await res.json();
-            let prediction = data.prediction || "";
+            const data = await res.json();
+            const prediction = data.prediction || "";
             document.getElementById("letter").innerText = prediction;
             
             // Stabilization Processing Buffer
             if (prediction !== currentPrediction) {
-                currentPrediction = prediction;
-                predictionStart = now;
-            } else {
-                if (predictionStart && (now - predictionStart >= STABLE_TIME)) {
-                    if (prediction && prediction !== lastLetter) {
-                        sentence += prediction;
-                        lastLetter = prediction;
-                        document.getElementById("sentence").innerText = sentence;
-                        predictionStart = now;
-                    }
+                currentPrediction = prediction; predictionStart = now;
+            } else if (predictionStart && (now - predictionStart >= MEDIAPIPE_CONFIG.stableTime)) {
+                if (prediction && prediction !== lastLetter) {
+                    sentence += prediction; lastLetter = prediction;
+                    document.getElementById("sentence").innerText = sentence;
+                    predictionStart = now;
                 }
             }
         } catch (e) { console.error("Sign prediction API fault:", e); }
     } else {
-        // Space injection when hands disappear
-        if (now - lastHandSeen > NO_HAND_TIMEOUT) {
+        if (now - lastHandSeen > MEDIAPIPE_CONFIG.noHandTimeout) {
             if (!sentence.endsWith(" ") && sentence.length > 0) {
-                sentence += " ";
-                lastLetter = "";
+                sentence += " "; lastLetter = ""; 
                 document.getElementById("sentence").innerText = sentence;
             }
             lastHandSeen = now;
@@ -310,20 +238,17 @@ window.startCamera = function() {
 };
 
 window.clearSentence = function() {
-    sentence = "";
-    lastLetter = "";
-    document.getElementById("sentence").innerText = "";
+    sentence = ""; lastLetter = ""; document.getElementById("sentence").innerText = "";
 };
 
 // ==========================================
-// 4. SPEECH AUDIO RECORDING & AUTH SYSTEMS
+// AUDIO RECORDING & SPEECH-TO-TEXT
 // ==========================================
 let recorder, chunks = [];
 
 window.startRecording = async function() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recorder = new MediaRecorder(stream);
-    chunks = [];
+    recorder = new MediaRecorder(stream); chunks = [];
     recorder.ondataavailable = e => chunks.push(e.data);
     recorder.start();
 };
@@ -333,23 +258,27 @@ window.stopRecording = function() {
     recorder.stop();
     recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/wav" });
-        let form = new FormData();
-        form.append("audio", blob);
-        
-        let res = await fetch("https://signova-ai-cvsw.onrender.com/api/auth/speech-to-text/", {
+        const form = new FormData(); form.append("audio", blob);
+        const res = await fetch(API_ENDPOINTS.speechToText, {
             method: "POST",
             body: form
         });
-        let data = await res.json();
+        const data = await res.json();
         document.getElementById("speechResult").innerText = data.text || "";
     };
 };
 
-window.handleGoogleLogin = function(response) {
-    const token = response.credential;
-    fetch("https://signova-ai-cvsw.onrender.com/api/auth/google/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
+// ==========================================
+// 7. BOOT
+// ==========================================
+window.addEventListener('DOMContentLoaded', () => {
+    init3DSpace();
+
+    document.getElementById('animateBtn')?.addEventListener('click', () => {
+        const text = document.getElementById('textToSignInput').value.trim();
+        if (text) playSignSequence(text);
     });
-};
+
+    document.getElementById('stopBtn')?.addEventListener('click', stopAnimation);
+});
+
