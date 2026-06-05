@@ -106,10 +106,6 @@ function init3DSpace() {
     }, undefined, (err) => console.error('Avatar load error:', err));
 }
 
-/**
- * Traverses the 3D model hierarchy and logs the names of all Bone objects.
- * Useful for identifying rig joint names for animation mapping.
- */
 function debugModelStructure(obj) {
     console.log('--- BONE HIERARCHY ---');
     obj.traverse((node) => {
@@ -158,7 +154,7 @@ function normalizeHandCoordinates(coords) {
 }
 
 // ==========================================
-// MEDIAPIPE SIGN-TO-TEXT & LIVE DATASTREAM INTEGRATION
+// MEDIAPIPE SIGN-TO-TEXT
 // ==========================================
 let sentence = "", currentPrediction = "", lastLetter = "", predictionStart = null;
 let lastHandSeen = Date.now();
@@ -284,24 +280,71 @@ window.clearSentence = function() {
 // ==========================================
 let recorder, chunks = [];
 
-window.startRecording = async function() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recorder = new MediaRecorder(stream); chunks = [];
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.start();
-};
+/**
+ * Initializes the MediaRecorder with the user's microphone stream.
+ */
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recorder = new MediaRecorder(stream);
+        chunks = [];
 
-window.stopRecording = function() {
-    if (!recorder) return;
-    recorder.stop();
-    recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: "audio/wav" });
-        const form = new FormData(); form.append("audio", blob);
-        const res = await fetch(API_ENDPOINTS.speechToText, { method: "POST", body: form });
-        const data = await res.json();
-        document.getElementById("speechResult").innerText = data.text || "";
-    };
-};
+        recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+        };
+
+        recorder.onstart = () => {
+            document.getElementById('startMicBtn').disabled = true;
+            document.getElementById('stopMicBtn').disabled = false;
+            document.getElementById('speechResult').innerText = 'Recording...';
+            console.log('Audio recording started.');
+        };
+
+        recorder.onstop = async () => {
+            document.getElementById('startMicBtn').disabled = false;
+            document.getElementById('stopMicBtn').disabled = true;
+            document.getElementById('speechResult').innerText = 'Processing audio...';
+            
+            // Compile data chunks into a valid wav Blob
+            const blob = new Blob(chunks, { type: 'audio/wav' });
+            
+            // Append as 'audio' inside FormData
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.wav');
+
+            console.log('Sending audio to speech-to-text API...');
+            try {
+                const response = await fetch(API_ENDPOINTS.speechToText, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                document.getElementById('speechResult').innerText = data.text || 'No transcription received.';
+            } catch (error) {
+                console.error('Speech-to-Text API Error:', error);
+                document.getElementById('speechResult').innerText = 'Error processing speech.';
+            }
+            
+            // Release the microphone stream
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+        recorder.start();
+    } catch (error) {
+        console.error('Microphone access error:', error);
+        alert('Could not access microphone. Please check permissions.');
+    }
+}
+
+/**
+ * Stops the active MediaRecorder session.
+ */
+function stopRecording() {
+    if (recorder && recorder.state !== 'inactive') {
+        recorder.stop();
+        console.log('Audio recording stopped.');
+    }
+}
 
 // ==========================================
 // BOOT & EVENT LISTENERS
@@ -313,11 +356,16 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startTrackingBtn')?.addEventListener('click', startTracking);
     document.getElementById('stopTrackingBtn')?.addEventListener('click', stopTracking);
 
+    // Audio Controls
+    document.getElementById('startMicBtn')?.addEventListener('click', startRecording);
+    document.getElementById('stopMicBtn')?.addEventListener('click', stopRecording);
+    const stopMicBtn = document.getElementById('stopMicBtn');
+    if (stopMicBtn) stopMicBtn.disabled = true;
+
     // Animation Controls
     document.getElementById('animateBtn')?.addEventListener('click', () => {
         const text = document.getElementById('textToSignInput').value.trim();
         if (text) playSignSequence(text);
     });
-
     document.getElementById('stopBtn')?.addEventListener('click', stopAnimation);
 });
