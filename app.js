@@ -10,6 +10,16 @@ const container = document.getElementById('canvas-3d-container');
 // Bone target rotations for smooth interpolation
 const boneTargets = {};
 const LERP_FACTOR = 0.1;
+let isAnimatingString = false;
+
+const REST_POSE = {
+    'RightForeArm': { x: 0, y: 0, z: 0 },
+    'RightHandIndex1': { x: 0, y: 0, z: 0 },
+    'RightHandMiddle1': { x: 0, y: 0, z: 0 },
+    'RightHandRing1': { x: 0, y: 0, z: 0 },
+    'RightHandPinky1': { x: 0, y: 0, z: 0 },
+    'RightHandThumb2': { x: 0, y: 0, z: 0 }
+};
 
 const signLanguageMap = {
     'A': {
@@ -40,20 +50,54 @@ const signLanguageMap = {
 };
 
 /**
+ * Applies a specific pose to the bone target matrix.
+ * @param {Object} pose - Dictionary of bone names and rotation values.
+ */
+function applyPose(pose) {
+    for (const [boneName, rotation] of Object.entries(pose)) {
+        boneTargets[boneName] = rotation;
+    }
+}
+
+/**
  * Maps a single character to avatar joint rotations.
  * @param {string} letter - The character to animate.
  */
 function animateCharacterToLetter(letter) {
     const char = letter.toUpperCase();
+    if (char === ' ') {
+        applyPose(REST_POSE);
+        return;
+    }
+
     if (!signLanguageMap[char]) {
         console.warn(`No mapping found for letter: ${char}`);
         return;
     }
 
-    const pose = signLanguageMap[char];
-    for (const [boneName, rotation] of Object.entries(pose)) {
-        boneTargets[boneName] = rotation;
+    applyPose(signLanguageMap[char]);
+}
+
+/**
+ * Parses a string and sequentially animates the avatar.
+ * @param {string} text - The input string to translate to sign.
+ */
+async function playSignSequence(text) {
+    if (isAnimatingString) return;
+    isAnimatingString = true;
+
+    // Clean and normalize input
+    const sequence = text.toUpperCase().replace(/[^A-Z ]/g, '');
+    
+    for (const char of sequence) {
+        animateCharacterToLetter(char);
+        // Async pause between poses (Milestone 3: 1000ms delay)
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
+
+    // Reset to resting pose after sequence completion
+    applyPose(REST_POSE);
+    isAnimatingString = false;
 }
 
 function init3DSpace() {
@@ -143,9 +187,7 @@ window.addEventListener('DOMContentLoaded', () => {
         animateBtn.addEventListener('click', () => {
             const text = textToSignInput.value.trim();
             if (text.length > 0) {
-                // For now, we just animate the first character as a proof of concept
-                // before we handle sequential string parsing
-                animateCharacterToLetter(text[0]);
+                playSignSequence(text);
             }
         });
     }
