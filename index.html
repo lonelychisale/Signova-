@@ -135,39 +135,50 @@
 
     <div id="workspace">
         <div id="left-panel">
-            <h2>Signova Control Panel</h2>
-            
+            <h2>Signova</h2>
+
             <div class="control-box">
-                <h3>1. Authentication</h3>
-                <!-- <div id="g_id_onload" data-client_id="219175324866-2do89kbdr0v4vmdo6r6uaa99103bf3fb.apps.googleusercontent.com" data-callback="handleGoogleLogin"></div>
-                <div class="g_id_signin"></div> -->
+                <h3>Translation Input</h3>
+                <input type="text" id="textToSignInput" placeholder="Enter text to sign...">
+                <button id="animateBtn">Animate Avatar</button>
+                <button id="stopBtn" class="secondary">Stop</button>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+                    <label style="font-size:13px;color:#64748b;white-space:nowrap">Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="400" max="2000" value="1000" step="100"
+                        style="flex:1" oninput="document.getElementById('speedVal').textContent=this.value+'ms'">
+                    <span id="speedVal" style="font-size:13px;font-weight:600;color:#4f46e5;min-width:50px">1000ms</span>
+                </div>
             </div>
 
             <div class="control-box">
-                <h3>2. Text to Sign Translation</h3>
-                <input type="text" id="textToSignInput" placeholder="Type text to animate avatar..." style="width:80%; padding:8px;">
-                <button id="animateBtn">Animate</button>
-            </div>
-
-            <div class="control-box">
-                <h3>3. Sign to Text (Webcam)</h3>
+                <h3>Hand Tracking</h3>
                 <video id="video" autoplay></video>
                 <canvas id="canvas"></canvas>
-                <button onclick="startCamera()">Start Tracking</button>
-                <button onclick="clearSentence()">Clear Text</button>
-                <p><strong>Live Prediction:</strong> <span id="letter">-</span></p>
-                <p><strong>Sentence Output:</strong> <span id="sentence"></span></p>
+                <div style="display:flex; gap:8px;">
+                    <button id="startTrackingBtn">Start Tracking</button>
+                    <button id="stopTrackingBtn" class="secondary" style="flex:1;">Stop</button>
+                </div>
+                <button onclick="clearSentence()" class="secondary">Clear Output</button>
+                
+                <div id="prediction-status">
+                    <div>Letter: <span id="letter">-</span></div>
+                </div>
+                <div id="sentence-display">
+                    Output: <span id="sentence">Waiting...</span>
+                </div>
             </div>
 
             <div class="control-box">
-                <h3>4. Speech to Text</h3>
-                <button onclick="startRecording()">Start Mic</button>
-                <button onclick="stopRecording()">Stop & Send Audio</button>
-                <p><strong>Transcription:</strong> <span id="speechResult"></span></p>
+                <h3>Voice Command</h3>
+                <button onclick="startRecording()">Start Recording</button>
+                <button onclick="stopRecording()" class="secondary">Transcribe</button>
+                <p style="font-size: 0.85rem; margin-top: 10px;"><strong>Transcription:</strong> <span id="speechResult">-</span></p>
             </div>
         </div>
 
-        <div id="canvas-3d-container"></div>
+        <div id="canvas-3d-container">
+            <!-- Three.js Canvas will be injected here -->
+        </div>
     </div>
 
     <script type="importmap">
