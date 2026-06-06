@@ -197,7 +197,7 @@ button {
     box-shadow var(--dur) var(--ease);
 }
 
-/* Primary — gradient pill (Figma CTA buttons) */
+/* Primary — gradient pill (matches Figma CTA buttons) */
 button:not(.secondary) {
   background: var(--grad-btn);
   color: var(--text-on-grad);
@@ -481,4 +481,383 @@ video { aspect-ratio: 4/3; object-fit: cover; }
   #workspace           { flex-direction: column; }
   #left-panel          { width: 100%; min-width: unset; max-height: 52vh; border-right: none; border-bottom: 1px solid var(--border-light); }
   #canvas-3d-container { flex: 1; min-height: 48vh; }
+}
+
+/* =====================================================
+   AUTH OVERLAY — Covers welcome screen, login screen, user chip
+   ===================================================== */
+
+/* ── Overlay backdrop ─────────────────────────────── */
+#auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+
+  /* Purple→pink radial gradient background — matches Figma splash */
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,
+      rgba(123,47,190,.35) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 100% 100%,
+      rgba(233,30,140,.25) 0%, transparent 65%),
+    #F7F7FB;
+
+  animation: auth-fade-in .28s ease both;
+}
+
+@keyframes auth-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Exit animation triggered by JS */
+#auth-overlay.auth-overlay--exit {
+  animation: auth-fade-out .35s ease both;
+  pointer-events: none;
+}
+
+@keyframes auth-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(.97); }
+}
+
+/* ── Screen switcher ──────────────────────────────── */
+.auth-screen {
+  display: none;
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth-screen--active {
+  display: block;
+  animation: auth-screen-in .25s cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes auth-screen-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Card ─────────────────────────────────────────── */
+.auth-card {
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow:
+    0 4px 24px rgba(123,47,190,.12),
+    0 1px 4px rgba(0,0,0,.06);
+  padding: 36px 32px 28px;
+  width: 100%;
+  position: relative;
+}
+
+/* ── Logo block ───────────────────────────────────── */
+.auth-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-logo__icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  display: inline-block;
+  filter: drop-shadow(0 4px 12px rgba(123,47,190,.25));
+  animation: auth-icon-float 3s ease-in-out infinite;
+}
+
+@keyframes auth-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.auth-logo__name {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+  background: linear-gradient(135deg, #7B2FBE 0%, #E91E8C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.auth-logo__tagline {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B6B8A;
+  line-height: 1.5;
+}
+
+.auth-logo__tagline span {
+  font-size: 12px;
+  color: #A0A0BC;
+}
+
+/* ── Welcome text (login screen) ──────────────────── */
+.auth-welcome-text {
+  margin-bottom: 22px;
+}
+
+.auth-welcome-text h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: #1A1A2E;
+  margin-bottom: 4px;
+}
+
+.auth-welcome-text p {
+  font-size: 13.5px;
+  color: #6B6B8A;
+  font-weight: 400;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+}
+
+/* ── Auth buttons ─────────────────────────────────── */
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  margin-bottom: 0;
+  transition:
+    opacity .18s,
+    transform .18s cubic-bezier(.16,1,.3,1),
+    box-shadow .18s;
+}
+
+/* Primary gradient pill */
+.auth-btn--primary {
+  background: linear-gradient(90deg, #7B2FBE 0%, #E91E8C 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(233,30,140,.32);
+}
+
+.auth-btn--primary:hover {
+  opacity: .92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(233,30,140,.42);
+}
+
+/* Outlined pill */
+.auth-btn--outline {
+  background: transparent;
+  color: #7B2FBE;
+  border: 2px solid #7B2FBE;
+}
+
+.auth-btn--outline:hover {
+  background: #F0E8FF;
+}
+
+/* Google-branded outline button */
+.auth-btn--google {
+  color: #1A1A2E;
+  border-color: #D8D8EE;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.auth-btn--google:hover {
+  background: #F7F7FB;
+  border-color: #A0A0BC;
+}
+
+/* Ghost / text link style */
+.auth-btn--ghost {
+  background: transparent;
+  color: #6B6B8A;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 10px;
+  box-shadow: none;
+  margin-top: 2px;
+}
+
+.auth-btn--ghost:hover {
+  color: #7B2FBE;
+  background: #F0E8FF;
+}
+
+/* ── GSI rendered button wrapper ──────────────────── */
+.auth-google-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  min-height: 44px; /* reserves space while GSI loads */
+}
+
+/* ── Divider ──────────────────────────────────────── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+  color: #A0A0BC;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #EBEBF5;
+}
+
+/* ── Error message ────────────────────────────────── */
+.auth-error {
+  background: #FFF0F0;
+  border: 1px solid #FFCDD2;
+  color: #C62828;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* ── Legal text ───────────────────────────────────── */
+.auth-legal {
+  text-align: center;
+  font-size: 12px;
+  color: #A0A0BC;
+  margin-top: 16px;
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  line-height: 1.6;
+}
+
+.auth-legal a {
+  color: #7B2FBE;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-legal a:hover { text-decoration: underline; }
+
+/* ── Back button ──────────────────────────────────── */
+.auth-back {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F7F7FB;
+  border: 1px solid #EBEBF5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #1A1A2E;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  width: 36px; /* override full-width rule */
+  transition: background .15s;
+}
+
+.auth-back:hover {
+  background: #F0E8FF;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── User chip (injected after login) ─────────────── */
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  background: #fff;
+  border-bottom: 1px solid #EBEBF5;
+  font-size: 13px;
+}
+
+.user-chip__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7B2FBE, #E91E8C);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-chip__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  margin: 0;
+}
+
+.user-chip__avatar--guest {
+  background: #F0E8FF;
+  font-size: 14px;
+}
+
+.user-chip__name {
+  font-weight: 600;
+  color: #1A1A2E;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-chip__signout {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7B2FBE;
+  background: #F0E8FF;
+  border: none;
+  border-radius: 99px;
+  padding: 4px 10px;
+  cursor: pointer;
+  width: auto;
+  margin: 0;
+  box-shadow: none;
+  transition: background .15s;
+}
+
+.user-chip__signout:hover {
+  background: #E4D8FF;
+  transform: none;
+  box-shadow: none;
 }
