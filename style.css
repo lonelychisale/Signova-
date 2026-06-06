@@ -1,6 +1,484 @@
-body {
-margin: 0; overflow: hidden; background: #111;
+/* =====================================================
+   SIGNOVA.AI — styles.css  (Figma-matched)
+   Design: purple→pink gradient brand, white cards,
+           rounded pill buttons, clean accessibility UI
+   ===================================================== */
+
+:root {
+  /* Brand — purple → pink gradient */
+  --grad-start:      #7B2FBE;
+  --grad-end:        #E91E8C;
+  --grad-main:       linear-gradient(135deg, #7B2FBE 0%, #E91E8C 100%);
+  --grad-btn:        linear-gradient(90deg,  #7B2FBE 0%, #E91E8C 100%);
+
+  /* Solid brand colours */
+  --brand-purple:    #7B2FBE;
+  --brand-pink:      #E91E8C;
+  --brand-light:     #F0E8FF;   /* soft purple tint — chip/tag bg */
+
+  /* Accent */
+  --accent-teal:     #00C896;   /* "Recognising sign" green */
+  --accent-red:      #E53935;   /* Emergency */
+
+  /* Neutrals */
+  --bg-page:         #F7F7FB;
+  --bg-card:         #FFFFFF;
+  --bg-input:        #F3F3F7;
+  --bg-chip:         #EFEFFF;
+
+  /* Text */
+  --text-primary:    #1A1A2E;
+  --text-secondary:  #6B6B8A;
+  --text-tertiary:   #A0A0BC;
+  --text-on-grad:    #FFFFFF;
+
+  /* Borders */
+  --border-light:    #EBEBF5;
+  --border-mid:      #D8D8EE;
+  --border-active:   var(--brand-purple);
+
+  /* Elevation */
+  --shadow-card:     0 2px 12px rgba(123,47,190,.08);
+  --shadow-btn:      0 4px 16px rgba(233,30,140,.30);
+  --shadow-raised:   0 8px 32px rgba(123,47,190,.14);
+
+  /* Layout */
+  --panel-w:         380px;
+  --radius-sm:       10px;
+  --radius-md:       16px;
+  --radius-lg:       20px;
+  --radius-pill:     999px;
+
+  /* Typography */
+  --font:            'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Transitions */
+  --ease:            cubic-bezier(.16,1,.3,1);
+  --dur:             200ms;
 }
-canvas {
-width: 100%; height: 100vh; display: block;
+
+/* ── Reset ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Workspace ────────────────────────────────────── */
+#workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Left Panel ───────────────────────────────────── */
+#left-panel {
+  width: var(--panel-w);
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-page);
+  border-right: 1px solid var(--border-light);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-mid) transparent;
+  z-index: 10;
+  padding: 0;
+  gap: 0;
+}
+
+#left-panel::-webkit-scrollbar        { width: 3px; }
+#left-panel::-webkit-scrollbar-thumb  { background: var(--border-mid); border-radius: 99px; }
+
+/* ── Panel Brand Header ───────────────────────────── */
+#left-panel > h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--grad-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding: 22px 20px 8px;
+  line-height: 1;
+}
+
+/* ── Control Cards ────────────────────────────────── */
+.control-box {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-card);
+  margin: 8px 12px;
+  padding: 18px 16px;
+  transition: box-shadow var(--dur) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.control-box:first-of-type { margin-top: 4px; }
+.control-box:last-of-type  { margin-bottom: 16px; }
+
+.control-box:hover {
+  box-shadow: var(--shadow-raised);
+  transform: none;
+}
+
+/* ── Section Sub-headings ─────────────────────────── */
+h3 {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 13px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+h3::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-light);
+}
+
+/* ── Text Input ───────────────────────────────────── */
+input[type="text"] {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-input);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color var(--dur) var(--ease), background var(--dur);
+}
+
+input[type="text"]::placeholder { color: var(--text-tertiary); }
+
+input[type="text"]:focus {
+  border-color: var(--brand-purple);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(123,47,190,.10);
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+button {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 12px 18px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-bottom: 8px;
+  transition:
+    opacity var(--dur),
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+/* Primary — gradient pill (Figma CTA buttons) */
+button:not(.secondary) {
+  background: var(--grad-btn);
+  color: var(--text-on-grad);
+  box-shadow: var(--shadow-btn);
+}
+
+button:not(.secondary):hover {
+  opacity: .92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(233,30,140,.38);
+}
+
+button:not(.secondary):active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Secondary — outlined pill */
+button.secondary {
+  background: transparent;
+  color: var(--brand-purple);
+  border: 1.5px solid var(--brand-purple);
+  box-shadow: none;
+}
+
+button.secondary:hover {
+  background: var(--brand-light);
+}
+
+/* Disabled */
+button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* Live / active tracking state */
+#startTrackingBtn[disabled] {
+  background: var(--accent-teal);
+  border: none;
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(0,200,150,.20);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── Range Slider ─────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border-mid);
+  border-radius: 99px;
+  outline: none;
+  flex: 1;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--brand-purple);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 2px rgba(123,47,190,.22);
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+input[type="range"]::-moz-range-thumb {
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--brand-purple);
+  border: 2.5px solid #fff;
+  cursor: pointer;
+}
+
+/* Speed row */
+.control-box div[style*="align-items:center"],
+.control-box div[style*="align-items: center"] {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  margin-top: 4px;
+  display: flex !important;
+  gap: 10px;
+  align-items: center;
+}
+
+#speedVal {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--brand-purple) !important;
+  min-width: 52px;
+  text-align: right;
+  background: var(--brand-light);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* ── Video + Canvas stack ─────────────────────────── */
+video, canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: #0D0D1A;
+  margin-bottom: 10px;
+  border: none;
+}
+
+video { aspect-ratio: 4/3; object-fit: cover; }
+
+/* Canvas sits on top of video for drawing hand skeleton    */
+#canvas {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  margin-bottom: 0;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+/* ── Prediction Status Bar ────────────────────────── */
+#prediction-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  margin: 8px 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* "● LIVE" chip */
+#prediction-status::before {
+  content: '● LIVE';
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--accent-teal);
+  background: rgba(0,200,150,.10);
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid rgba(0,200,150,.25);
+}
+
+/* The letter badge */
+#prediction-status span {
+  font-size: 18px;
+  font-weight: 800;
+  background: var(--grad-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* ── Sentence Output ──────────────────────────────── */
+#sentence-display {
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  min-height: 48px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  transition: border-color var(--dur);
+}
+
+#sentence {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+  margin-top: 3px;
+  font-style: normal;
+  letter-spacing: .01em;
+}
+
+/* ── Speech Transcription ─────────────────────────── */
+.control-box p {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  line-height: 1.65;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+}
+
+#speechResult {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+/* ── 3D Stage ─────────────────────────────────────── */
+#canvas-3d-container {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(160deg, #F0E8FF 0%, #FCE4F4 40%, #E8F0FF 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Subtle dot grid */
+#canvas-3d-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(123,47,190,.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* Corner watermark */
+#canvas-3d-container::after {
+  content: 'SIGNOVA.AI';
+  position: absolute;
+  bottom: 18px;
+  right: 20px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  background: var(--grad-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: .4;
+  pointer-events: none;
+}
+
+/* Three.js injects a <canvas> — keep it clean */
+#canvas-3d-container > canvas {
+  position: relative;
+  z-index: 1;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  margin-bottom: 0;
+  aspect-ratio: unset;
+}
+
+/* ── Focus ring (a11y) ────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--brand-purple);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Scrollbars global ────────────────────────────── */
+::-webkit-scrollbar            { width: 4px; height: 4px; }
+::-webkit-scrollbar-track      { background: transparent; }
+::-webkit-scrollbar-thumb      { background: var(--border-mid); border-radius: 99px; }
+
+/* ── Entry animation ──────────────────────────────── */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.control-box:nth-child(1) { animation: slide-up .22s var(--ease) 40ms  both; }
+.control-box:nth-child(2) { animation: slide-up .22s var(--ease) 90ms  both; }
+.control-box:nth-child(3) { animation: slide-up .22s var(--ease) 140ms both; }
+.control-box:nth-child(4) { animation: slide-up .22s var(--ease) 190ms both; }
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 680px) {
+  #workspace           { flex-direction: column; }
+  #left-panel          { width: 100%; min-width: unset; max-height: 52vh; border-right: none; border-bottom: 1px solid var(--border-light); }
+  #canvas-3d-container { flex: 1; min-height: 48vh; }
 }
