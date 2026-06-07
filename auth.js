@@ -269,3 +269,37 @@ function bindAuthEvents() {
             }
         });
 }
+
+// ─── Initialise Google GSI ─────────────────────────────
+function initGoogleGSI() {
+    // GSI script may still be loading — poll until ready
+    const MAX_WAIT = 8000;
+    const INTERVAL = 200;
+    let elapsed = 0;
+
+    const poll = setInterval(() => {
+        elapsed += INTERVAL;
+
+        if (window.google?.accounts?.id) {
+            clearInterval(poll);
+
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: window.handleGoogleCredential,
+                auto_select: false,
+                cancel_on_tap_outside: true,
+            });
+
+            renderGsiButton();
+
+        } else if (elapsed >= MAX_WAIT) {
+            clearInterval(poll);
+            // Show fallback error only on login screen
+            const errEl = document.querySelector('[data-screen="login"] .auth-error');
+            if (errEl) {
+                errEl.textContent = 'Google Sign-In could not load. Check your Client ID and network.';
+                errEl.style.display = 'block';
+            }
+        }
+    }, INTERVAL);
+}
