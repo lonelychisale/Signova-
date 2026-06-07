@@ -239,3 +239,33 @@ function renderAuthOverlay() {
     bindAuthEvents();
     initGoogleGSI();
 }
+
+// ─── Wire up buttons ────────────────────────────────────
+function bindAuthEvents() {
+    document.getElementById('welcomeLoginBtn')
+        ?.addEventListener('click', () => showScreen('login'));
+
+    document.getElementById('welcomeGuestBtn')
+        ?.addEventListener('click', () => enterApp(null, true));
+
+    document.getElementById('loginBackBtn')
+        ?.addEventListener('click', () => showScreen('welcome'));
+
+    document.getElementById('loginGuestBtn')
+        ?.addEventListener('click', () => enterApp(null, true));
+
+    document.getElementById('googleSignInBtn')
+        ?.addEventListener('click', () => {
+            // Trigger the GSI prompt programmatically
+            if (window.google?.accounts?.id) {
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        // One Tap suppressed — render the button instead
+                        renderGsiButton();
+                    }
+                });
+            } else {
+                showAuthError('login', 'Google Sign-In is not available. Check your Client ID or network.');
+            }
+        });
+}
