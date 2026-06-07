@@ -81,40 +81,35 @@ function enterApp(user, isGuest = false) {
     updateUserChip(user, isGuest);
 }
 
-/** Inject a small user chip into the panel header after login */
+/** Inject user chip into the stage top-bar anchor */
 function updateUserChip(user, isGuest) {
-    const brandEl = document.querySelector('#left-panel > h2');
-    if (!brandEl) return;
-
-    const existing = document.getElementById('user-chip');
-    if (existing) existing.remove();
+    const anchor = document.getElementById('user-chip-anchor');
+    if (!anchor) return;
 
     const chip = document.createElement('div');
     chip.id = 'user-chip';
     chip.className = 'user-chip';
 
     if (isGuest) {
-        chip.innerHTML = `
-            <span class="user-chip__avatar user-chip__avatar--guest">👤</span>
-            <span class="user-chip__name">Guest</span>
-            <button class="user-chip__signout" onclick="signovaSignOut()">Sign in</button>
-        `;
+        chip.innerHTML =
+            '<span class="user-chip__avatar user-chip__avatar--guest">&#128100;</span>' +
+            '<span class="user-chip__name">Guest</span>' +
+            '<button class="user-chip__signout" onclick="signovaSignOut()">Sign in</button>';
     } else {
         const initials = user.name
             ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
             : '?';
-        chip.innerHTML = `
-            <span class="user-chip__avatar" title="${user.name || ''}">${
-                user.picture
-                    ? `<img src="${user.picture}" alt="${initials}">`
-                    : initials
-            }</span>
-            <span class="user-chip__name">${user.given_name || user.name || 'User'}</span>
-            <button class="user-chip__signout" onclick="signovaSignOut()">Sign out</button>
-        `;
+        const avatarInner = user.picture
+            ? '<img src="' + user.picture + '" alt="' + initials + '">'
+            : initials;
+        chip.innerHTML =
+            '<span class="user-chip__avatar" title="' + (user.name || '') + '">' + avatarInner + '</span>' +
+            '<span class="user-chip__name">' + (user.given_name || user.name || 'User') + '</span>' +
+            '<button class="user-chip__signout" onclick="signovaSignOut()">Sign out</button>';
     }
 
-    brandEl.insertAdjacentElement('afterend', chip);
+    anchor.innerHTML = '';
+    anchor.appendChild(chip);
 }
 
 // ─── Sign out ──────────────────────────────────────────
