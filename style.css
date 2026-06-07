@@ -76,12 +76,14 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0; /* critical: lets children scroll inside a flex parent */
 }
 
 /* ── Left Panel ───────────────────────────────────── */
 #left-panel {
   width: var(--panel-w);
-  min-width: 300px;
+  min-width: 320px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   background: var(--bg-page);
@@ -93,6 +95,7 @@ body {
   z-index: 10;
   padding: 0;
   gap: 0;
+  flex-shrink: 0;
 }
 
 #left-panel::-webkit-scrollbar        { width: 3px; }
@@ -100,15 +103,16 @@ body {
 
 /* ── Panel Brand Header ───────────────────────────── */
 #left-panel > h2 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   background: var(--grad-main);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  padding: 22px 20px 8px;
+  padding: 24px 20px 6px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 /* ── Control Cards ────────────────────────────────── */
@@ -117,19 +121,20 @@ body {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-card);
-  margin: 8px 12px;
-  padding: 18px 16px;
+  margin: 10px 14px;
+  padding: 20px 18px;
   transition: box-shadow var(--dur) var(--ease);
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; */
+  flex-shrink: 0;
 }
 
-.control-box:first-of-type { margin-top: 4px; }
-.control-box:last-of-type  { margin-bottom: 16px; }
+.control-box:first-of-type { margin-top: 6px; }
+.control-box:last-of-type  { margin-bottom: 20px; }
 
 .control-box:hover {
   box-shadow: var(--shadow-raised);
-  transform: none;
+  /* transform: none; */
 }
 
 /* ── Section Sub-headings ─────────────────────────── */
@@ -334,13 +339,13 @@ video { aspect-ratio: 4/3; object-fit: cover; }
   padding: 9px 12px;
   background: var(--bg-input);
   border-radius: var(--radius-sm);
-  margin: 8px 0 6px;
+  margin-top: 4px;
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
 }
 
-/* "● LIVE" chip */
+/* "● LIVE" chip via pseudo-element */
 #prediction-status::before {
   content: '● LIVE';
   font-size: 9px;
@@ -363,9 +368,13 @@ video { aspect-ratio: 4/3; object-fit: cover; }
   background-clip: text;
   min-width: 28px;
   text-align: center;
+  background: var(--brand-light);
+  -webkit-text-fill-color: var(--brand-purple);
+  padding: 2px 10px;
+  border-radius: 6px;
 }
 
-/* ── Sentence Output ──────────────────────────────── */
+/* ── Sentence display ─────────────────────────────── */
 #sentence-display {
   background: var(--bg-input);
   border: 1.5px solid var(--border-light);
@@ -375,6 +384,7 @@ video { aspect-ratio: 4/3; object-fit: cover; }
   font-size: 13.5px;
   color: var(--text-secondary);
   line-height: 1.6;
+  margin-top: 6px;
   transition: border-color var(--dur);
 }
 
