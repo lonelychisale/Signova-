@@ -114,3 +114,32 @@ function updateUserChip(user, isGuest) {
 
     brandEl.insertAdjacentElement('afterend', chip);
 }
+
+// ─── Sign out ──────────────────────────────────────────
+window.signovaSignOut = function () {
+    clearSession();
+    // Revoke Google session if available
+    if (window.google?.accounts?.id) {
+        google.accounts.id.disableAutoSelect();
+    }
+    location.reload();
+};
+
+// ─── Google credential callback ────────────────────────
+window.handleGoogleCredential = function (response) {
+    const payload = decodeJwt(response.credential);
+    if (!payload) {
+        showAuthError('login', 'Could not verify Google sign-in. Please try again.');
+        return;
+    }
+    enterApp(payload);
+};
+
+// ─── Error display ─────────────────────────────────────
+function showAuthError(screen, message) {
+    const el = document.querySelector(`[data-screen="${screen}"] .auth-error`);
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
