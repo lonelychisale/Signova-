@@ -42,3 +42,39 @@ function clearSession() {
     window.signovaAuth.user = null;
     window.signovaAuth.isGuest = false;
 }
+
+// ─── UI State Machine ──────────────────────────────────
+// Screens: 'welcome' | 'login'
+let currentScreen = 'welcome';
+
+function showScreen(name) {
+    currentScreen = name;
+    document.querySelectorAll('.auth-screen').forEach(el => {
+        el.classList.toggle('auth-screen--active', el.dataset.screen === name);
+    });
+}
+
+// ─── Entry: show workspace, hide overlay ───────────────
+function enterApp(user, isGuest = false) {
+    window.signovaAuth.user = user;
+    window.signovaAuth.isGuest = isGuest;
+    if (!isGuest && user) persistSession(user);
+
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) {
+        overlay.classList.add('auth-overlay--exit');
+        setTimeout(() => overlay.remove(), 380);
+    }
+
+    const workspace = document.getElementById('workspace');
+    if (workspace) {
+        workspace.style.opacity = '0';
+        workspace.style.display = 'flex';
+        requestAnimationFrame(() => {
+            workspace.style.transition = 'opacity .35s ease';
+            workspace.style.opacity = '1';
+        });
+    }
+
+    updateUserChip(user, isGuest);
+}
