@@ -73,6 +73,8 @@ function enterApp(user, isGuest = false) {
         requestAnimationFrame(() => {
             workspace.style.transition = 'opacity .35s ease';
             workspace.style.opacity = '1';
+            // Trigger a resize to ensure Three.js canvas handles the new dimensions
+            window.dispatchEvent(new Event('resize'));
         });
     }
 
@@ -330,7 +332,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
         // Already logged in — go straight to app
         window.signovaAuth.user = saved;
-        if (workspace) workspace.style.display = 'flex';
+        if (workspace) {
+            workspace.style.display = 'flex';
+            // Ensure Three.js picks up the correct dimensions after display:flex
+            requestAnimationFrame(() => {
+                window.dispatchEvent(new Event('resize'));
+            });
+        }
         updateUserChip(saved, false);
         return;
     }
