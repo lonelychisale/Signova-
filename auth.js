@@ -303,3 +303,41 @@ function initGoogleGSI() {
         }
     }, INTERVAL);
 }
+
+/** Render the official GSI button into the designated container */
+function renderGsiButton() {
+    const container = document.getElementById('g_id_signin_btn');
+    if (!container || !window.google?.accounts?.id) return;
+    container.innerHTML = ''; // clear any previous render
+
+    google.accounts.id.renderButton(container, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        shape: 'pill',
+        logo_alignment: 'left',
+        width: 280,
+    });
+}
+
+// ─── Boot ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const workspace = document.getElementById('workspace');
+
+    // Check for existing session first
+    const saved = loadSession();
+    if (saved) {
+        // Already logged in — go straight to app
+        window.signovaAuth.user = saved;
+        if (workspace) workspace.style.display = 'flex';
+        updateUserChip(saved, false);
+        return;
+    }
+
+    // Hide workspace until authenticated
+    if (workspace) workspace.style.display = 'none';
+
+    // Render the auth overlay
+    renderAuthOverlay();
+});
