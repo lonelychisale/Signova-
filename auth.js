@@ -4,7 +4,7 @@
    ===================================================== */
 
 // ─── CONFIG — replace with your actual Client ID ──────
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '219175324866-2do89kbdr0v4vmdo6r6uaa99103bf3fb.apps.googleusercontent.com';
 
 // ─── State ─────────────────────────────────────────────
 window.signovaAuth = { user: null, isGuest: false };
