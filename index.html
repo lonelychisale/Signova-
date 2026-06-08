@@ -37,19 +37,36 @@
         <!-- Three.js canvas injected here by app.js -->
 
         <!-- Top bar: brand + user chip -->
-        <header class="stage-topbar">
+        <!-- <header class="stage-topbar">
           <div class="stage-brand">
             <span class="stage-brand__icon">🤟</span>
             <span class="stage-brand__name">SIGNOVA.AI</span>
           </div>
           <!-- auth.js injects .user-chip here -->
-          <div id="user-chip-anchor"></div>
-        </header>
+          <!-- <div id="user-chip-anchor"></div>
+        </header> -->
+
+        <!-- Top bar: brand + user chip -->
+<header class="stage-topbar">
+  <div class="stage-brand">
+
+    <img
+      src="./assets/logo.png"
+      alt="SIGNOVA.AI Logo"
+      class="stage-brand__logo"
+    />
+
+  </div>
+
+  <!-- auth.js injects .user-chip here -->
+  <div id="user-chip-anchor"></div>
+</header>
+
 
         <!-- PiP webcam feed — top right corner -->
         <div class="pip-wrap" id="pipWrap">
           <div class="pip-header">
-            <span class="pip-label">Hand Tracking</span>
+            <span class="pip-label"></span>
             <div class="pip-controls">
               <button id="startTrackingBtn" class="pip-btn pip-btn--start" aria-label="Start tracking">Start</button>
               <button id="stopTrackingBtn" class="pip-btn pip-btn--stop" aria-label="Stop tracking">Stop</button>

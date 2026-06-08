@@ -201,7 +201,7 @@ body {
 ═══════════════════════════════════════════════════ */
 .pip-wrap {
   position: absolute;
-  top: 70px;
+  top: 130px;
   right: 20px;
   z-index: 20;
   width: 240px;
@@ -1083,4 +1083,20 @@ button {
   background: #E4D8FF;
   transform: none;
   box-shadow: none;
+}
+
+
+
+.stage-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stage-brand__logo {
+  width: 140px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
 }
