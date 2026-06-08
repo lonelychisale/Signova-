@@ -1,15 +1,157 @@
- <!DOCTYPE html> <html lang="en"> <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/> <title>3D Avatar</title>
-<link rel="stylesheet" href="style.css" />
-<script type="importmap"> {
-"imports": {
-"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-"GLTFLoader": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js", "OrbitControls": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"
-} }
-</script> </head> 
-   <body>
-<canvas id="bg"></canvas>
-<script type="module" src="main.js"></script>
-</body>
- </html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signova.AI — Sign Language Translator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+    <!-- Meshopt -->
+    <script src="https://unpkg.com/meshoptimizer@0.21.0/meshopt_decoder.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+
+  <!-- ═══════════════════════════════════════════════════════
+      WORKSPACE — full-viewport stage layout
+      Avatar fills the entire background canvas.
+      All controls float as overlay panels.
+  ═══════════════════════════════════════════════════════ -->
+    <div id="workspace">
+
+      <!-- ── 3D Stage (full viewport background) ──────── -->
+      <main id="canvas-3d-container" aria-label="3D signing avatar stage">
+        <!-- Three.js canvas injected here by app.js -->
+
+        <!-- Top bar: brand + user chip -->
+        <header class="stage-topbar">
+          <div class="stage-brand">
+            <span class="stage-brand__icon">🤟</span>
+            <span class="stage-brand__name">SIGNOVA.AI</span>
+          </div>
+          <!-- auth.js injects .user-chip here -->
+          <div id="user-chip-anchor"></div>
+        </header>
+
+        <!-- PiP webcam feed — top right corner -->
+        <div class="pip-wrap" id="pipWrap">
+          <div class="pip-header">
+            <span class="pip-label">Hand Tracking</span>
+            <div class="pip-controls">
+              <button id="startTrackingBtn" class="pip-btn pip-btn--start" aria-label="Start tracking">Start</button>
+              <button id="stopTrackingBtn" class="pip-btn pip-btn--stop" aria-label="Stop tracking">Stop</button>
+            </div>
+          </div>
+          <div class="cam-wrap">
+            <video id="video" autoplay playsinline muted aria-label="Webcam feed"></video>
+            <canvas id="canvas" aria-hidden="true"></canvas>
+            <!-- Recognition badge -->
+            <div id="prediction-status" role="status" aria-live="polite">
+              <span class="live-dot"></span>
+              Letter: <span id="letter">—</span>
+            </div>
+          </div>
+          <div id="sentence-display" role="status" aria-live="polite">
+            <span class="sent-icon">💬</span>
+            <span id="sentence">Waiting for signs…</span>
+            <button class="sent-clear" onclick="clearSentence()" aria-label="Clear">✕</button>
+          </div>
+        </div>
+
+        <!-- Bottom control dock ────────────────────────── -->
+        <div class="dock">
+
+          <!-- Text to Sign card -->
+          <div class="dock-card dock-card--main">
+            <label class="dock-label" for="textToSignInput">Text to Sign</label>
+            <div class="dock-input-row">
+              <input
+                type="text"
+                id="textToSignInput"
+                placeholder="Type something to sign…"
+                autocomplete="off"
+                aria-label="Text to animate in sign language"
+              >
+              <button id="animateBtn" class="dock-send-btn" aria-label="Animate">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </button>
+            </div>
+            <!-- Speed + stop row -->
+            <div class="dock-meta-row">
+              <label class="dock-meta-label" for="speedSlider">Speed</label>
+              <input
+                type="range" id="speedSlider"
+                min="400" max="2000" value="1000" step="100"
+                aria-label="Animation speed"
+                oninput="document.getElementById('speedVal').textContent = this.value + 'ms'"
+              >
+              <span id="speedVal" class="dock-speed-val">1000ms</span>
+              <button id="stopBtn" class="dock-stop-btn" aria-label="Stop animation">■ Stop</button>
+            </div>
+          </div>
+
+          <!-- Voice card -->
+          <div class="dock-card dock-card--voice">
+            <label class="dock-label">Voice to Sign</label>
+            <div class="dock-voice-row">
+              <button id="startMicBtn" class="dock-mic-btn" aria-label="Start recording">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                Record
+              </button>
+              <button id="stopMicBtn" class="dock-mic-btn dock-mic-btn--stop" disabled aria-label="Stop and send">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+                Send
+              </button>
+            </div>
+            <div class="dock-transcript" id="speechResult" aria-live="polite">—</div>
+          </div>
+
+        </div><!-- /.dock -->
+
+      </main>
+
+    </div><!-- /#workspace -->
+
+    <!-- Three.js import map -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/examples/jsm/loaders/GLTFLoader.js": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js"
+        }
+      }
+    </script>
+
+    <script src="auth.js" defer></script>
+    <script type="module" src="app.js"></script>
+
+  </body>
+</html>
